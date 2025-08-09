@@ -110,28 +110,41 @@ function BalloonsLayer({ enabled, muted }: { enabled: boolean; muted: boolean })
                 x: [0, bl.sway, -bl.sway * 0.6, bl.sway * 0.4, 0],
                 opacity: [0.96, 1, 0.98, 1],
               }}
-              exit={{ scale: 0.2, opacity: 0 }}
+              exit={{ scale: 0.2, opacity: 0, transition: { duration: 0.3, ease: "easeOut" } }}
               transition={{ duration: bl.floatSec, ease: "linear" }}
-              onAnimationComplete={() => setBalloons((b) => b.filter((x) => x.id !== bl.id))}
-              whileTap={{ scale: 0.92 }}
+              onAnimationComplete={() => {
+                // Only remove if balloon reached the top naturally (not clicked)
+                setBalloons((b) => b.filter((x) => x.id !== bl.id));
+              }}
+              whileTap={{ scale: 0.8 }}
               onClick={async (e) => {
                 e.stopPropagation();
-                await pop();
+                console.log('🎈 Balloon clicked!', bl.id, 'Total balloons:', balloons.length); // Debug log
+                try {
+                  await pop();
+                  console.log('🔊 Pop sound played');
+                } catch (error) {
+                  console.log('❌ Audio pop failed:', error);
+                }
                 // trigger exit animation via removal
-                setBalloons((b) => b.filter((x) => x.id !== bl.id));
+                setBalloons((prevBalloons) => {
+                  const newBalloons = prevBalloons.filter((x) => x.id !== bl.id);
+                  console.log('🗑️ Removing balloon', bl.id, 'New count:', newBalloons.length);
+                  return newBalloons;
+                });
               }}
               aria-label="Balloon"
             >
-              <div className="relative" style={{ width: bl.size, height: containerH }}>
+              <div className="relative pointer-events-none" style={{ width: bl.size, height: containerH }}>
                 {/* String behind the balloon */}
                 <div
-                  className="absolute left-1/2 -translate-x-1/2 opacity-30"
+                  className="absolute left-1/2 -translate-x-1/2 opacity-30 pointer-events-none"
                   style={{ top: bodyH - 1, width: 1.2, height: bl.size * 0.95, background: "rgba(17,17,17,0.9)", zIndex: 0 }}
                 />
 
                 {/* Balloon body */}
                 <div
-                  className="relative shadow-md"
+                  className="relative shadow-md pointer-events-none"
                   style={{
                     zIndex: 2,
                     width: bl.size,
@@ -144,7 +157,7 @@ function BalloonsLayer({ enabled, muted }: { enabled: boolean; muted: boolean })
                 />
                 {/* Specular highlight */}
                 <div
-                  className="absolute"
+                  className="absolute pointer-events-none"
                   style={{
                     zIndex: 3,
                     top: bodyH * 0.18,
@@ -159,7 +172,7 @@ function BalloonsLayer({ enabled, muted }: { enabled: boolean; muted: boolean })
 
                 {/* Knot */}
                 <div
-                  className="absolute left-1/2 -translate-x-1/2"
+                  className="absolute left-1/2 -translate-x-1/2 pointer-events-none"
                   style={{
                     zIndex: 3,
                     top: bodyH - bl.size * 0.015,
