@@ -11,24 +11,27 @@ function useAudioPop(volume = 0.06) {
   const volRef = useRef(volume);
   useEffect(() => { volRef.current = volume; }, [volume]);
 
-  return () => {
+  return async () => {
     try {
-      if (!ctxRef.current) ctxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      if (!ctxRef.current) {
+        ctxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
       const ctx = ctxRef.current!;
+      if (ctx.state === "suspended") {
+        // Safari/iOS sometimes starts suspended until a gesture
+        await ctx.resume();
+      }
       const now = ctx.currentTime;
 
-      // A tiny "pop" made with a short burst (click + damped sine)
       const gain = ctx.createGain();
-      gain.gain.setValueAtTime(volRef.current, now);
+      gain.gain.setValueAtTime(Math.max(0.0001, volRef.current), now);
       gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
 
-      // Oscillator body
       const osc = ctx.createOscillator();
       osc.type = "triangle";
       osc.frequency.setValueAtTime(240, now);
       osc.frequency.exponentialRampToValueAtTime(60, now + 0.12);
 
-      // Add a short noise burst for the initial transient
       const bufferSize = 2048;
       const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
       const data = noiseBuffer.getChannelData(0);
@@ -81,53 +84,76 @@ function BalloonsLayer({ enabled, muted }: { enabled: boolean; muted: boolean })
   useEffect(() => {
     if (!enabled) return;
     setBalloons((b) => b.concat(Array.from({ length: 12 }, () => randomBalloon(idRef.current++))));
-    const spawn = setInterval(() => setBalloons((b) => (b.length > 35 ? b : b.concat(randomBalloon(idRef.current++)))), 1600);
+    const spawn = setInterval(
+      () => setBalloons((b) => (b.length > 35 ? b : b.concat(randomBalloon(idRef.current++)))),
+      1600
+    );
     return () => clearInterval(spawn);
   }, [enabled]);
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-10 overflow-hidden">
+    // put above content/header for reliable clicks
+    <div className="fixed inset-0 z-40 pointer-events-none overflow-hidden">
       <AnimatePresence initial={false}>
         {balloons.map((bl) => {
-          const bodyH = bl.size * 1.25; // ellipse body height
-          const containerH = bodyH + bl.size * 0.9; // room for the string
+          const bodyH = bl.size * 1.28;
+          const containerH = bodyH + bl.size * 0.95;
+
           return (
             <motion.button
               key={bl.id}
-              className="absolute pointer-events-auto"
+              className="absolute pointer-events-auto cursor-pointer select-none"
               style={{ left: `${bl.x}vw`, bottom: -containerH }}
-              initial={{ y: 0, x: 0, scale: 1, opacity: 0.95 }}
+              initial={{ y: 0, x: 0, scale: 1, opacity: 0.96 }}
               animate={{
                 y: -window.innerHeight - containerH,
                 x: [0, bl.sway, -bl.sway * 0.6, bl.sway * 0.4, 0],
-                opacity: [0.95, 1, 0.98, 1],
+                opacity: [0.96, 1, 0.98, 1],
               }}
               exit={{ scale: 0.2, opacity: 0 }}
               transition={{ duration: bl.floatSec, ease: "linear" }}
               onAnimationComplete={() => setBalloons((b) => b.filter((x) => x.id !== bl.id))}
-              onClick={(e) => {
+              whileTap={{ scale: 0.92 }}
+              onClick={async (e) => {
                 e.stopPropagation();
-                pop();
+                await pop();
+                // trigger exit animation via removal
                 setBalloons((b) => b.filter((x) => x.id !== bl.id));
               }}
+              aria-label="Balloon"
             >
               <div className="relative" style={{ width: bl.size, height: containerH }}>
-                {/* String goes BEHIND the body (no more visible through balloon) */}
+                {/* String behind the balloon */}
                 <div
                   className="absolute left-1/2 -translate-x-1/2 opacity-30"
-                  style={{ top: bodyH - 2, width: 1, height: bl.size * 0.9, background: "#111", zIndex: 0 }}
+                  style={{ top: bodyH - 1, width: 1.2, height: bl.size * 0.95, background: "rgba(17,17,17,0.9)", zIndex: 0 }}
                 />
 
-                {/* Balloon body (custom oval shape) */}
+                {/* Balloon body */}
                 <div
                   className="relative shadow-md"
                   style={{
                     zIndex: 2,
                     width: bl.size,
                     height: bodyH,
-                    borderRadius: "46% 46% 50% 50% / 58% 58% 42% 42%", // top more bulbous
-                    background: `radial-gradient(circle at 35% 28%, hsl(${bl.hue} 80% 95%) 0%, hsl(${bl.hue} 95% 70%) 35%, hsl(${bl.hue} 85% 55%) 75%, hsl(${bl.hue} 90% 50%) 100%)`,
-                    filter: "saturate(1.1)",
+                    // rounder top, slightly tapered bottom = nicer balloon
+                    borderRadius: "50% 50% 43% 43% / 62% 62% 38% 38%",
+                    background: `radial-gradient(circle at 35% 28%, hsl(${bl.hue} 80% 95%) 0%, hsl(${bl.hue} 92% 72%) 34%, hsl(${bl.hue} 85% 58%) 74%, hsl(${bl.hue} 88% 50%) 100%)`,
+                    filter: "saturate(1.05)",
+                  }}
+                />
+                {/* Specular highlight */}
+                <div
+                  className="absolute"
+                  style={{
+                    zIndex: 3,
+                    top: bodyH * 0.18,
+                    left: bl.size * 0.24,
+                    width: bl.size * 0.22,
+                    height: bl.size * 0.28,
+                    borderRadius: "50%",
+                    background: "rgba(255,255,255,0.45)",
+                    filter: "blur(4px)",
                   }}
                 />
 
@@ -136,10 +162,10 @@ function BalloonsLayer({ enabled, muted }: { enabled: boolean; muted: boolean })
                   className="absolute left-1/2 -translate-x-1/2"
                   style={{
                     zIndex: 3,
-                    top: bodyH - bl.size * 0.02,
-                    width: bl.size * 0.12,
-                    height: bl.size * 0.12,
-                    background: `hsl(${bl.hue} 90% 50%)`,
+                    top: bodyH - bl.size * 0.015,
+                    width: bl.size * 0.14,
+                    height: bl.size * 0.14,
+                    background: `hsl(${bl.hue} 88% 48%)`,
                     clipPath: "polygon(50% 0%, 0% 100%, 100% 100%)",
                   }}
                 />
@@ -291,14 +317,14 @@ function LangLogo({ k }: { k: string }) {
 interface Skill {
   key: string;
   name: string;
-  years: number | null;
+  years: number | null; // null -> 'familiar'
   market: number;
 }
 
 function SkillBadge({ skill }: { skill: Skill }) {
   return (
-    <motion.div 
-      className="flex items-center gap-3 rounded-xl border border-zinc-200/60 dark:border-zinc-800/60 bg-white/70 dark:bg-zinc-900/40 px-3 py-2 hover:shadow-md hover:border-zinc-300/80 dark:hover:border-zinc-700/80 transition-all duration-200 cursor-default"
+    <motion.div
+      className="flex items-center gap-3 rounded-xl border border-zinc-200/60 dark:border-zinc-800/60 bg-white/70 dark:bg-zinc-900/40 px-3 py-2 hover:shadow-md transition-all duration-200"
       whileHover={{ scale: 1.02, y: -2 }}
       whileTap={{ scale: 0.98 }}
       layout
@@ -306,48 +332,34 @@ function SkillBadge({ skill }: { skill: Skill }) {
       <LangLogo k={skill.key} />
       <div className="leading-tight">
         <div className="text-sm font-medium">{skill.name}</div>
-        {skill.years ? (
-          <div className="text-xs text-zinc-500 dark:text-zinc-400">{skill.years} {skill.years > 1 ? "yrs" : "yr"}</div>
-        ) : (
-          <div className="text-xs text-zinc-500 dark:text-zinc-400">familiar</div>
-        )}
+        <div className="text-xs text-zinc-500 dark:text-zinc-400">
+          {skill.years ? `${skill.years} ${skill.years > 1 ? "yrs" : "yr"}` : "familiar"}
+        </div>
       </div>
     </motion.div>
   );
 }
 
 function LanguagesGrid() {
-  const [mode, setMode] = React.useState<"market" | "alpha">("market");
-  const base: Skill[] = [
-    { key: "python", name: "Python", years: 2, market: 95 },
-    { key: "javascript", name: "JavaScript", years: 1, market: 94 },
-    { key: "java", name: "Java", years: 1, market: 92 },
-    { key: "sql", name: "SQL", years: null, market: 90 },
-    { key: "go", name: "Go", years: 1, market: 88 },
-    { key: "rust", name: "Rust", years: 1, market: 86 },
-    { key: "cpp", name: "C++", years: 5, market: 85 },
-    { key: "c", name: "C", years: 2, market: 80 },
-    { key: "scala", name: "Scala", years: 2, market: 78 },
-    { key: "spark", name: "Spark", years: 2, market: 76 },
-    { key: "jupyter", name: "Jupyter", years: null, market: 70 },
+  // fixed order by market value (no UI toggle)
+  const skills: Skill[] = [
+    { key: "python",     name: "Python",     years: 2,    market: 95 },
+    { key: "javascript", name: "JavaScript", years: 1,    market: 94 },
+    { key: "java",       name: "Java",       years: 1,    market: 92 },
+    { key: "sql",        name: "SQL",        years: null, market: 90 }, // familiar, as requested
+    { key: "go",         name: "Go",         years: 1,    market: 88 },
+    { key: "rust",       name: "Rust",       years: 1,    market: 86 },
+    { key: "cpp",        name: "C++",        years: 5,    market: 85 },
+    { key: "c",          name: "C",          years: 2,    market: 80 },
+    { key: "scala",      name: "Scala",      years: 2,    market: 78 },
+    { key: "spark",      name: "Spark",      years: 2,    market: 76 },
+    { key: "jupyter",    name: "Jupyter",    years: null, market: 70 },
   ];
-  const skills = [...base].sort((a, b) =>
-    mode === "alpha" ? a.name.localeCompare(b.name) : b.market - a.market
-  );
+
   return (
     <div>
-      <div className="mb-3 inline-flex rounded-lg border border-zinc-300/60 dark:border-zinc-700/80 p-1 text-xs">
-        <button onClick={() => setMode("market")} className={cx("px-3 py-1 rounded-md", mode === "market" && "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900")}>
-          Market value
-        </button>
-        <button onClick={() => setMode("alpha")} className={cx("px-3 py-1 rounded-md", mode === "alpha" && "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900")}>
-          A–Z
-        </button>
-      </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-        {skills.map((s) => (
-          <SkillBadge key={s.key} skill={s} />
-        ))}
+        {skills.map((s) => <SkillBadge key={s.key} skill={s} />)}
       </div>
     </div>
   );
