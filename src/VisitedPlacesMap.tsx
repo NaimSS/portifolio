@@ -8,12 +8,9 @@ const mapStyles = `
     background: transparent !important;
     border: none !important;
   }
-  .custom-marker {
+  .custom-marker-pin {
     background: transparent !important;
     border: none !important;
-    transform: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
   }
   .leaflet-container {
     background: #f8fafc;
@@ -26,17 +23,19 @@ const mapStyles = `
 // Fix default marker icons (Vite/Webpack) - create custom icon
 const createCustomIcon = (index: number) => {
   return L.divIcon({
-    className: `custom-marker-${index}`,
-    html: `<div style="
-      width: 20px;
-      height: 20px;
-      background: #dc2626;
-      border: 2px solid #ffffff;
+    className: 'custom-marker-pin',
+    html: `<div class="marker-pin-${index}" style="
+      width: 16px;
+      height: 16px;
+      background: #ef4444;
+      border: 2px solid white;
       border-radius: 50%;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+      position: relative;
+      z-index: 1000;
     "></div>`,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
   });
 };
 
@@ -107,7 +106,7 @@ function Stat({ label, value }: { label: string; value: number | string }) {
   );
 }
 
-export default function CuriosityMap(): JSX.Element {
+export default function CuriosityMap() {
   const stats = useMemo(() => {
     const cities = VISITS.length;
     const countries = new Set(VISITS.map(v => v.country)).size;
