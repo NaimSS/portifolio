@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Github, Linkedin, Moon, Sun, Trophy, Briefcase, GraduationCap, Rocket } from "lucide-react";
+import CuriosityMap from "./VisitedPlacesMap";
 
 // ---------- Utility ----------
 const cx = (...cls: (string | boolean | undefined)[]) => cls.filter(Boolean).join(" ");
@@ -83,7 +84,8 @@ function BalloonsLayer({ enabled, muted }: { enabled: boolean; muted: boolean })
 
   useEffect(() => {
     if (!enabled) return;
-    setBalloons((b) => b.concat(Array.from({ length: 12 }, () => randomBalloon(idRef.current++))));
+    // Init with 3 ballons
+    setBalloons((b) => b.concat(Array.from({ length: 3 }, () => randomBalloon(idRef.current++))));
     const spawn = setInterval(
       () => setBalloons((b) => (b.length > 35 ? b : b.concat(randomBalloon(idRef.current++)))),
       1600
@@ -670,6 +672,9 @@ export default function Portfolio() {
             </div>
           </Card>
         </Section>
+
+        {/* Places visited */ }
+        <CuriosityMap />
 
         {/* Footer */}
         <footer className="py-12" aria-label="footer">
