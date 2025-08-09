@@ -525,12 +525,10 @@ export default function Portfolio() {
             <div className="grid gap-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-semibold">Coinbase — Risk Team</h3>
+                  <h3 className="text-lg font-semibold">Coinbase</h3>
                   <p className="text-sm text-zinc-500 dark:text-zinc-400">Software Engineer • Apr 2025-present • Remote</p>
                   <ul className="mt-2 list-disc pl-5 text-sm">
                     <li>Backend Software Engineer (Go): design, build, and operate services that detect and prevent fraud at scale.</li>
-                    <li>Evolve real-time decisioning/scoring pipelines and risk signals in partnership with Data and Risk.</li>
-                    <li>Improve reliability and observability (SLOs, on-call readiness, metrics/tracing) for high-throughput systems.</li>
                   </ul>
                 </div>
               </div>
