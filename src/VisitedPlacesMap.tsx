@@ -54,7 +54,7 @@ const VISITS: Visit[] = [
   { city: "João Pessoa",    country: "Brazil",       date: "2024", lat: -7.1195,    lng: -34.845 },
   { city: "Baku",           country: "Azerbaijan",   date: "2025", lat: 40.4093,    lng: 49.8671 },
   { city: "Washington, D.C.", country: "USA",       date: "2024", lat: 38.9072,    lng: -77.0369 },
-  { city: "Campinas",       country: "Brazil",       date: "—",    lat: -22.9056,   lng: -47.0608 },
+  { city: "Campinas",       country: "Brazil",       date: "2020", lat: -22.9056,   lng: -47.0608 },
 ];
 
 // Fit the map to markers once they exist
