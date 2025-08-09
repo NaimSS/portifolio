@@ -297,7 +297,12 @@ interface Skill {
 
 function SkillBadge({ skill }: { skill: Skill }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-zinc-200/60 dark:border-zinc-800/60 bg-white/70 dark:bg-zinc-900/40 px-3 py-2">
+    <motion.div 
+      className="flex items-center gap-3 rounded-xl border border-zinc-200/60 dark:border-zinc-800/60 bg-white/70 dark:bg-zinc-900/40 px-3 py-2 hover:shadow-md hover:border-zinc-300/80 dark:hover:border-zinc-700/80 transition-all duration-200 cursor-default"
+      whileHover={{ scale: 1.02, y: -2 }}
+      whileTap={{ scale: 0.98 }}
+      layout
+    >
       <LangLogo k={skill.key} />
       <div className="leading-tight">
         <div className="text-sm font-medium">{skill.name}</div>
@@ -307,7 +312,7 @@ function SkillBadge({ skill }: { skill: Skill }) {
           <div className="text-xs text-zinc-500 dark:text-zinc-400">familiar</div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -417,26 +422,50 @@ export default function Portfolio() {
 
       {/* Hero */}
       <main id="top" className="mx-auto max-w-6xl px-4">
-        <section className="py-10 md:py-16">
-          <div className="grid items-center gap-8 md:grid-cols-3">
+        <section className="py-12 md:py-20">
+          <div className="grid items-center gap-10 md:grid-cols-3">
             <div className="md:col-span-2">
-              <h1 className="text-3xl md:text-5xl font-bold tracking-tight">
-                Building reliable systems for risk, performance, and people.
-              </h1>
-              <p className="mt-4 text-base md:text-lg text-zinc-600 dark:text-zinc-300">
+              <motion.h1 
+                className="text-4xl md:text-6xl font-bold tracking-tight leading-tight"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.1 }}
+              >
+                Building reliable systems for{" "}
+                <span className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+                  risk, performance, and people
+                </span>
+                .
+              </motion.h1>
+              <motion.p 
+                className="mt-6 text-lg md:text-xl text-zinc-600 dark:text-zinc-300 leading-relaxed"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.3 }}
+              >
                 Software engineer and competitive programmer with experience in risk/fraud systems, big data, and concurrent algorithms. Two-time ICPC World Finalist and NASA Space Apps Global Winner.
-              </p>
-              <div className="mt-6 flex flex-wrap items-center gap-3">
-                <a href="https://github.com/NaimSS" target="_blank" className="group inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800/60">
+              </motion.p>
+              <motion.div 
+                className="mt-8 flex flex-wrap items-center gap-4"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.5 }}
+              >
+                <a href="https://github.com/NaimSS" target="_blank" className="group inline-flex items-center gap-2 rounded-full bg-black dark:bg-white text-white dark:text-black px-6 py-3 text-sm font-medium hover:scale-105 transition-transform duration-200">
                   <Github size={16} /> GitHub
                 </a>
-                <a href="https://www.linkedin.com/in/naimsantos" target="_blank" className="group inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800/60">
+                <a href="https://www.linkedin.com/in/naimsantos" target="_blank" className="group inline-flex items-center gap-2 rounded-full border border-zinc-300 dark:border-zinc-700 px-6 py-3 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800/60 transition-colors duration-200">
                   <Linkedin size={16} /> LinkedIn
                 </a>
-              </div>
-              <div className="mt-4 text-xs text-zinc-500 dark:text-zinc-400">
-                Tip: click the balloons to pop them ✨
-              </div>
+              </motion.div>
+              <motion.div 
+                className="mt-6 text-sm text-zinc-500 dark:text-zinc-400"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.7 }}
+              >
+                💡 Tip: click the balloons to pop them ✨
+              </motion.div>
             </div>
             <div className="md:col-span-1">
               <Card>
