@@ -354,19 +354,19 @@ function SkillBadge({ skill }: { skill: Skill }) {
 }
 
 function LanguagesGrid() {
-  // fixed order by market value (no UI toggle)
+  // fixed order by market value
   const skills: Skill[] = [
     { key: "python",     name: "Python",     years: 2,    market: 95 },
     { key: "javascript", name: "JavaScript", years: 1,    market: 94 },
     { key: "java",       name: "Java",       years: 1,    market: 92 },
-    { key: "sql",        name: "SQL",        years: null, market: 90 }, // familiar, as requested
+    { key: "sql",        name: "SQL",        years: 2,    market: 90 },
     { key: "go",         name: "Go",         years: 1,    market: 88 },
     { key: "rust",       name: "Rust",       years: 1,    market: 86 },
     { key: "cpp",        name: "C++",        years: 5,    market: 85 },
     { key: "c",          name: "C",          years: 2,    market: 80 },
     { key: "scala",      name: "Scala",      years: 2,    market: 78 },
     { key: "spark",      name: "Spark",      years: 2,    market: 76 },
-    { key: "jupyter",    name: "Jupyter",    years: null, market: 70 },
+    { key: "jupyter",    name: "Jupyter",    years: 2,    market: 70 },
   ];
 
   return (
@@ -458,7 +458,7 @@ export default function Portfolio() {
               >
                 Building reliable systems for{" "}
                 <span className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-                  risk, performance, and people
+                  performance and people
                 </span>
                 .
               </motion.h1>
@@ -500,8 +500,8 @@ export default function Portfolio() {
                     <li className="flex items-start gap-2">
                       <Rocket size={16} className="mt-1 shrink-0" />
                       <div>
-                        <div className="font-medium">Coinbase — Risk Team</div>
-                        <div className="text-xs text-zinc-500">Software Engineer • 2025–present</div>
+                        <div className="font-medium">Coinbase</div>
+                        <div className="text-xs text-zinc-500">Backend Software Engineer • 2025-present</div>
                       </div>
                     </li>
                     {/* Split achievements */}
@@ -509,7 +509,7 @@ export default function Portfolio() {
                       <Trophy size={16} className="mt-1 shrink-0" />
                       <div>
                         <div className="font-medium">ICPC</div>
-                        <div className="text-xs text-zinc-500">World Finals ×2 (2022, 2024)</div>
+                        <div className="text-xs text-zinc-500">World Finals x2 (2022, 2024)</div>
                       </div>
                     </li>
                     <li className="flex items-start gap-2">
@@ -529,38 +529,58 @@ export default function Portfolio() {
         {/* Experience */}
         <Section id="experience" title="Experience" icon={<Briefcase className="h-6 w-6" /> }>
           <Card>
+            {/* coinbase */}
+  
             <div className="grid gap-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h3 className="text-lg font-semibold">Coinbase — Risk Team</h3>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">Software Engineer • 2025–present • Remote</p>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400">Software Engineer • Apr 2025-present • Remote</p>
                   <ul className="mt-2 list-disc pl-5 text-sm">
-                    <li>Contributing to risk and fraud detection systems at scale.</li>
-                    <li>Collaborating across Risk, Data, and Platform to improve reliability and signal quality.</li>
+                    <li>Backend Software Engineer (Go): design, build, and operate services that detect and prevent fraud at scale.</li>
+                    <li>Evolve real-time decisioning/scoring pipelines and risk signals in partnership with Data and Risk.</li>
+                    <li>Improve reliability and observability (SLOs, on-call readiness, metrics/tracing) for high-throughput systems.</li>
                   </ul>
                 </div>
               </div>
 
               <div className="h-px bg-zinc-200/70 dark:bg-zinc-800/70" />
+              {/* Griaule */ }
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold">Griaule</h3>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400">Software Engineer • Aug 2024-Apr 2025</p>
+                  <ul className="mt-2 list-disc pl-5 text-sm">
+                    <li>Research + backend work at Brazil’s largest biometric provider (fingerprint and face).</li>
+                    <li>Built reproducible workflows to train and evaluate AI models for fingerprint alignment/feature extraction and face liveness detection.</li>
+                    <li>Integrated high-performance C++ biometric libraries into backend services and user applications via WebAssembly (WASM).</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="h-px bg-zinc-200/70 dark:bg-zinc-800/70" />
+              {/* Huawei */ }
 
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-semibold">Huawei Research (Dresden, Germany)</h3>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">Research Intern • Jan 2024 – Jul 2024</p>
+                  <h3 className="text-lg font-semibold">Huawei - Dresden Research Center</h3>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400">Research Intern • Jan 2024 - Jul 2024 • Dresden, Germany</p>
                   <ul className="mt-2 list-disc pl-5 text-sm">
                     <li>Worked on tools for debugging concurrent algorithms via thread-interleaving simulation.</li>
                     <li>Re-implemented a state-of-the-art stateless model checking algorithm on a new scheduling paradigm.</li>
-                    <li>Optimized the engine to skip uninformative paths, achieving <span className="font-medium">3–10×</span> faster verification in most scenarios (Rust & C).</li>
+                    <li>Optimized the engine to skip uninformative paths, achieving <span className="font-medium">3-10x</span> faster verification in most scenarios (Rust & C).</li>
                   </ul>
                 </div>
               </div>
 
               <div className="h-px bg-zinc-200/70 dark:bg-zinc-800/70" />
 
+              {/* Incognia */ }
+
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-semibold">Incognia (São Paulo, Brazil)</h3>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">Software Engineer Intern / Junior • Apr 2022 – Jul 2023</p>
+                  <h3 className="text-lg font-semibold">Incognia</h3>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400">Software Engineer Intern / Junior • Apr 2022 - Jul 2023 • Remote </p>
                   <ul className="mt-2 list-disc pl-5 text-sm">
                     <li>Built big data pipelines for fraud prevention (Spark & Scala).</li>
                     <li>Enabled richer feature extraction and analyzed impact using Jupyter, Spark SQL.</li>
@@ -570,6 +590,8 @@ export default function Portfolio() {
               </div>
 
               <div className="h-px bg-zinc-200/70 dark:bg-zinc-800/70" />
+
+              {/* Competitive programming */ }
 
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -608,12 +630,12 @@ export default function Portfolio() {
             <div className="grid gap-5 md:grid-cols-2">
               <div>
                 <h3 className="font-semibold">MaratonIC</h3>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">Mar 2020 – Present</p>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">Mar 2020 - Present</p>
                 <ul className="mt-2 list-disc pl-5 text-sm">
                   <li>University group focused on Algorithms & Data Structures.</li>
                   <li>Taught C++ and competitive programming; organized major university contests.</li>
-                  <li>As competitor: two gold medals; invited to ICPC World Finals (2022, 2024).</li>
-                  <li>As coach: led teams to gold and silver.</li>
+                    <li>As competitor: two gold medals 🥇; invited to ICPC World Finals (2022, 2024).</li>
+                    <li>As coach: led teams to gold (🥇 x3) and bronze (🥉 x3), and 2 times to ICPC World Finals</li>
                 </ul>
               </div>
               <div>
@@ -667,7 +689,6 @@ export default function Portfolio() {
             <div className="flex items-center gap-4">
               <a className="inline-flex items-center gap-1 hover:opacity-90" href="https://github.com/NaimSS" target="_blank"><Github size={16} /> GitHub</a>
               <a className="inline-flex items-center gap-1 hover:opacity-90" href="https://www.linkedin.com/in/naimsantos" target="_blank"><Linkedin size={16} /> LinkedIn</a>
-              <a className="inline-flex items-center gap-1 hover:opacity-90" href="mailto:naimsantos2002@gmail.com" target="_blank"><Mail size={16} /> Email</a>
             </div>
           </div>
         </footer>
@@ -675,3 +696,4 @@ export default function Portfolio() {
     </div>
   );
 }
+// Note: This was vibe coded :)
