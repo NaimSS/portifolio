@@ -233,20 +233,7 @@ function LangLogo({ k }: { k: string }) {
     case "python":
       return (
         <svg {...common}>
-          <defs>
-            <linearGradient id="pyA" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#3776AB" />
-              <stop offset="100%" stopColor="#295a82" />
-            </linearGradient>
-            <linearGradient id="pyB" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#FFD43B" />
-              <stop offset="100%" stopColor="#e6bf32" />
-            </linearGradient>
-          </defs>
-          <rect x="6" y="6" width="17" height="17" rx="5" fill="url(#pyA)" />
-          <rect x="25" y="25" width="17" height="17" rx="5" fill="url(#pyB)" />
-          <circle cx="16" cy="14" r="2.2" fill="#fff"/>
-          <circle cx="32" cy="34" r="2.2" fill="#5e4a00"/>
+          <image href="/python-original.svg" width={size} height={size} />
         </svg>
       );
     case "javascript":
@@ -266,30 +253,31 @@ function LangLogo({ k }: { k: string }) {
     case "go":
       return (
         <svg {...common}>
-          <rect x="4" y="8" width="40" height="28" rx="6" fill="#00ADD8" />
-          <text x="12" y="29" fontFamily="ui-sans-serif, system-ui" fontWeight="900" fontSize="16" fill="#fff">GO</text>
-          <path d="M6 16h6M6 22h9" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+          <image href="/go-original.svg" width={size} height={size} />
         </svg>
       );
     case "rust":
       return (
         <svg {...common}>
-          <circle cx="24" cy="24" r="20" fill="#000" />
-          <text x="16" y="31" fontFamily="ui-sans-serif, system-ui" fontWeight="900" fontSize="18" fill="#fff">R</text>
+          <image href="/rust-original.svg" width={size} height={size} />
         </svg>
       );
     case "cpp":
       return (
         <svg {...common}>
-          <circle cx="24" cy="24" r="20" fill="#00599C" />
-          <text x="13" y="30" fontFamily="ui-sans-serif, system-ui" fontWeight="900" fontSize="16" fill="#fff">C++</text>
+          <image href="/cpp.svg" width={size} height={size} />
         </svg>
       );
     case "c":
       return (
         <svg {...common}>
-          <circle cx="24" cy="24" r="20" fill="#283593" />
-          <text x="19" y="31" fontFamily="ui-sans-serif, system-ui" fontWeight="900" fontSize="18" fill="#fff">C</text>
+          <image href="/c-original.svg" width={size} height={size} />
+        </svg>
+      );
+    case "git":
+      return (
+        <svg {...common}>
+          <image href="/github-original.svg" width={size} height={size} />
         </svg>
       );
     case "scala":
@@ -367,6 +355,8 @@ function LanguagesGrid() {
     { key: "scala",      name: "Scala",      years: 2,    market: 78 },
     { key: "spark",      name: "Spark",      years: 2,    market: 76 },
     { key: "jupyter",    name: "Jupyter",    years: 2,    market: 70 },
+    { key: "git",        name: "Git",        years: 5,    market: 68 },
+    
   ];
 
   return (
