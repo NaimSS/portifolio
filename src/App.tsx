@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Github, Linkedin, Mail, Moon, Sun, Trophy, Briefcase, GraduationCap, Rocket } from "lucide-react";
+import { Github, Linkedin, Moon, Sun, Trophy, Briefcase, GraduationCap, Rocket } from "lucide-react";
 
 // ---------- Utility ----------
 const cx = (...cls: (string | boolean | undefined)[]) => cls.filter(Boolean).join(" ");
@@ -229,11 +229,12 @@ function Pill({ children }: { children: React.ReactNode }) {
 function LangLogo({ k }: { k: string }) {
   const size = 36;
   const common = { width: size, height: size, viewBox: "0 0 48 48", role: "img", "aria-hidden": true };
+  const basePath = import.meta.env.BASE_URL;
   switch (k) {
     case "python":
       return (
         <svg {...common}>
-          <image href="/python-original.svg" width={size} height={size} />
+          <image href={`${basePath}python-original.svg`} width={size} height={size} />
         </svg>
       );
     case "javascript":
@@ -253,31 +254,31 @@ function LangLogo({ k }: { k: string }) {
     case "go":
       return (
         <svg {...common}>
-          <image href="/go-original.svg" width={size} height={size} />
+          <image href={`${basePath}go-original.svg`} width={size} height={size} />
         </svg>
       );
     case "rust":
       return (
         <svg {...common}>
-          <image href="/rust-original.svg" width={size} height={size} />
+          <image href={`${basePath}rust-original.svg`} width={size} height={size} />
         </svg>
       );
     case "cpp":
       return (
         <svg {...common}>
-          <image href="/cpp.svg" width={size} height={size} />
+          <image href={`${basePath}cpp.svg`} width={size} height={size} />
         </svg>
       );
     case "c":
       return (
         <svg {...common}>
-          <image href="/c-original.svg" width={size} height={size} />
+          <image href={`${basePath}c-original.svg`} width={size} height={size} />
         </svg>
       );
     case "git":
       return (
         <svg {...common}>
-          <image href="/github-original.svg" width={size} height={size} />
+          <image href={`${basePath}github-original.svg`} width={size} height={size} />
         </svg>
       );
     case "scala":
