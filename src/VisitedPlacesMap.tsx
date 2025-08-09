@@ -164,8 +164,8 @@ export default function CuriosityMap(): JSX.Element {
           />
           <AutoResize />
           <FitToMarkers points={VISITS} />
-          {VISITS.map((v) => (
-            <Marker key={`${v.city}-${v.date}`} position={[v.lat, v.lng]} icon={createCustomIcon()}>
+          {VISITS.map((v, index) => (
+            <Marker key={`${v.city}-${v.date}`} position={[v.lat, v.lng]} icon={createCustomIcon(index)}>
               <Tooltip direction="top" offset={[0, -8]} opacity={0.95}>
                 <div className="text-sm">
                   <div className="font-semibold">{v.city}</div>
