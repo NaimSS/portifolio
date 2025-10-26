@@ -10,6 +10,7 @@ You can see the page at [https://naimss.github.io/portifolio/](https://naimss.gi
 - Dark/light mode toggle  
 - Responsive design
 - Framer Motion animations
+- Map with visited locations
 
 ## Development
 
