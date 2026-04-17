@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState, Suspense, lazy } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Github, Linkedin, Moon, Sun, Trophy, Briefcase, GraduationCap, Rocket } from "lucide-react";
-import CuriosityMap from "./VisitedPlacesMap";
+import { ArrowUp, Github, Linkedin, Moon, Sun, Trophy, Briefcase, GraduationCap, Rocket, Volume2, VolumeX } from "lucide-react";
+
+const CuriosityMap = lazy(() => import("./VisitedPlacesMap"));
 
 // ---------- Utility ----------
 const cx = (...cls: (string | boolean | undefined)[]) => cls.filter(Boolean).join(" ");
@@ -15,7 +16,7 @@ function useAudioPop(volume = 0.06) {
   return async () => {
     try {
       if (!ctxRef.current) {
-        ctxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        ctxRef.current = new (window.AudioContext || (window as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext!)();
       }
       const ctx = ctxRef.current!;
       if (ctx.state === "suspended") {
@@ -63,28 +64,41 @@ type Balloon = {
   hue: number; // color hue
   floatSec: number; // duration to float to top
   sway: number; // horizontal sway px
+  swayDir: 1 | -1; // initial sway direction for phase variety
+};
+
+type Confetti = {
+  id: number;
+  x: number; // px from viewport left (fixed coords)
+  y: number; // px from viewport top
+  hue: number;
+  angle: number; // launch angle in degrees
+  dist: number; // travel distance px
 };
 
 function randomBalloon(idSeed: number): Balloon {
   const size = 38 + Math.random() * 34; // 38-72px
   return {
     id: idSeed,
-    x: Math.random() * 96 + 2, // 2-98 vw
+    x: Math.random() * 96 + 2,
     size,
     hue: Math.floor(Math.random() * 360),
-    floatSec: 10 + Math.random() * 10, // 10-20s
-    sway: 20 + Math.random() * 60, // 20-80px
+    // bigger balloons float slower (more air resistance)
+    floatSec: 14 + ((size - 38) / 34) * 8,
+    sway: 20 + Math.random() * 60,
+    swayDir: Math.random() > 0.5 ? 1 : -1,
   };
 }
 
-function BalloonsLayer({ enabled, muted }: { enabled: boolean; muted: boolean }) {
+function BalloonsLayer({ enabled, muted, onPop }: { enabled: boolean; muted: boolean; onPop: () => void }) {
   const [balloons, setBalloons] = useState<Balloon[]>([]);
+  const [confettis, setConfettis] = useState<Confetti[]>([]);
   const pop = useAudioPop(muted ? 0 : 0.06);
   const idRef = useRef(1);
+  const confettiIdRef = useRef(1);
 
   useEffect(() => {
-    if (!enabled) return;
-    // Init with 3 ballons
+    if (!enabled) { setBalloons([]); return; }
     setBalloons((b) => b.concat(Array.from({ length: 3 }, () => randomBalloon(idRef.current++))));
     const spawn = setInterval(
       () => setBalloons((b) => (b.length > 35 ? b : b.concat(randomBalloon(idRef.current++)))),
@@ -94,12 +108,39 @@ function BalloonsLayer({ enabled, muted }: { enabled: boolean; muted: boolean })
   }, [enabled]);
 
   return (
-    // put above content/header for reliable clicks
     <div className="fixed inset-0 z-40 pointer-events-none overflow-hidden">
+      {/* Confetti burst particles */}
+      <AnimatePresence>
+        {confettis.map((c) => (
+          <motion.div
+            key={c.id}
+            className="absolute rounded-full pointer-events-none"
+            style={{
+              left: c.x,
+              top: c.y,
+              width: 7,
+              height: 7,
+              background: `hsl(${c.hue} 90% 62%)`,
+            }}
+            initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+            animate={{
+              x: Math.cos((c.angle * Math.PI) / 180) * c.dist,
+              y: Math.sin((c.angle * Math.PI) / 180) * c.dist + 55,
+              opacity: 0,
+              scale: 0.2,
+            }}
+            transition={{ duration: 0.65, ease: "easeOut" }}
+            onAnimationComplete={() => setConfettis((p) => p.filter((x) => x.id !== c.id))}
+          />
+        ))}
+      </AnimatePresence>
+
+      {/* Balloons */}
       <AnimatePresence initial={false}>
         {balloons.map((bl) => {
           const bodyH = bl.size * 1.28;
           const containerH = bodyH + bl.size * 0.95;
+          const d = bl.swayDir;
 
           return (
             <motion.button
@@ -109,41 +150,44 @@ function BalloonsLayer({ enabled, muted }: { enabled: boolean; muted: boolean })
               initial={{ y: 0, x: 0, scale: 1, opacity: 0.96 }}
               animate={{
                 y: -window.innerHeight - containerH,
-                x: [0, bl.sway, -bl.sway * 0.6, bl.sway * 0.4, 0],
+                x: [0, bl.sway * d, -bl.sway * d * 0.6, bl.sway * d * 0.4, 0],
                 opacity: [0.96, 1, 0.98, 1],
               }}
               exit={{ scale: 0.2, opacity: 0, transition: { duration: 0.3, ease: "easeOut" } }}
               transition={{ duration: bl.floatSec, ease: "linear" }}
-              onAnimationComplete={() => {
-                // Only remove if balloon reached the top naturally (not clicked)
-                setBalloons((b) => b.filter((x) => x.id !== bl.id));
-              }}
+              onAnimationComplete={() => setBalloons((b) => b.filter((x) => x.id !== bl.id))}
               whileTap={{ scale: 0.8 }}
               onClick={async (e) => {
                 e.stopPropagation();
-                console.log('🎈 Balloon clicked!', bl.id, 'Total balloons:', balloons.length); // Debug log
-                try {
-                  await pop();
-                  console.log('🔊 Pop sound played');
-                } catch (error) {
-                  console.log('❌ Audio pop failed:', error);
-                }
-                // trigger exit animation via removal
-                setBalloons((prevBalloons) => {
-                  const newBalloons = prevBalloons.filter((x) => x.id !== bl.id);
-                  console.log('🗑️ Removing balloon', bl.id, 'New count:', newBalloons.length);
-                  return newBalloons;
-                });
+                // capture position BEFORE any await — currentTarget is nullified after async yield
+                const rect = e.currentTarget.getBoundingClientRect();
+                try { await pop(); } catch { /* noop */ }
+                const cx = rect.left + rect.width / 2;
+                const cy = rect.top + rect.height / 2;
+                const count = 9;
+                setConfettis((p) => [
+                  ...p,
+                  ...Array.from({ length: count }, (_, i) => ({
+                    id: confettiIdRef.current++,
+                    x: cx,
+                    y: cy,
+                    hue: bl.hue + Math.random() * 60 - 30,
+                    angle: (360 / count) * i + Math.random() * 20 - 10,
+                    dist: 40 + Math.random() * 55,
+                  })),
+                ]);
+
+                onPop();
+                setBalloons((p) => p.filter((x) => x.id !== bl.id));
               }}
-              aria-label="Balloon"
+              aria-label="Pop balloon"
             >
               <div className="relative pointer-events-none" style={{ width: bl.size, height: containerH }}>
-                {/* String behind the balloon */}
+                {/* String */}
                 <div
                   className="absolute left-1/2 -translate-x-1/2 opacity-30 pointer-events-none"
                   style={{ top: bodyH - 1, width: 1.2, height: bl.size * 0.95, background: "rgba(17,17,17,0.9)", zIndex: 0 }}
                 />
-
                 {/* Balloon body */}
                 <div
                   className="relative shadow-md pointer-events-none"
@@ -151,7 +195,6 @@ function BalloonsLayer({ enabled, muted }: { enabled: boolean; muted: boolean })
                     zIndex: 2,
                     width: bl.size,
                     height: bodyH,
-                    // rounder top, slightly tapered bottom = nicer balloon
                     borderRadius: "50% 50% 43% 43% / 62% 62% 38% 38%",
                     background: `radial-gradient(circle at 35% 28%, hsl(${bl.hue} 80% 95%) 0%, hsl(${bl.hue} 92% 72%) 34%, hsl(${bl.hue} 85% 58%) 74%, hsl(${bl.hue} 88% 50%) 100%)`,
                     filter: "saturate(1.05)",
@@ -171,7 +214,6 @@ function BalloonsLayer({ enabled, muted }: { enabled: boolean; muted: boolean })
                     filter: "blur(4px)",
                   }}
                 />
-
                 {/* Knot */}
                 <div
                   className="absolute left-1/2 -translate-x-1/2 pointer-events-none"
@@ -373,8 +415,7 @@ function LanguagesGrid() {
 
 // ---------- Main Component ----------
 export default function Portfolio() {
-  // Dark/Light mode fixed (persist + html class toggle)
-  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
+  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
   const dark = theme === "dark";
   useEffect(() => {
     const root = document.documentElement;
@@ -383,8 +424,39 @@ export default function Portfolio() {
     localStorage.setItem("theme", theme);
   }, [theme, dark]);
 
-  const [balloonsOn, setBalloonsOn] = useState(true);
+  // Respect prefers-reduced-motion — users can still opt in via toggle
+  const [balloonsOn, setBalloonsOn] = useState(() => {
+    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
+    return true;
+  });
   const [muted, setMuted] = useState(false);
+  const [popCount, setPopCount] = useState(0);
+  const handlePop = useCallback(() => setPopCount((n) => n + 1), []);
+
+  // Active nav section via IntersectionObserver
+  const [activeSection, setActiveSection] = useState("");
+  useEffect(() => {
+    const sections = ["experience", "awards", "projects", "skills", "education"];
+    const observers = sections.map((id) => {
+      const el = document.getElementById(id);
+      if (!el) return null;
+      const ob = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) setActiveSection(id); },
+        { rootMargin: "-30% 0px -60% 0px", threshold: 0 }
+      );
+      ob.observe(el);
+      return ob;
+    });
+    return () => observers.forEach((ob) => ob?.disconnect());
+  }, []);
+
+  // Scroll-to-top button visibility
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 600);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const nav = [
     { href: "#experience", label: "Experience" },
@@ -394,6 +466,8 @@ export default function Portfolio() {
     { href: "#education", label: "Education" },
   ];
 
+  const pillCls = "rounded-full border border-zinc-300/60 dark:border-zinc-700/80 px-3 py-1 text-xs hover:bg-zinc-50 dark:hover:bg-zinc-800/60 transition-colors";
+
   return (
     <div className="relative min-h-screen text-zinc-800 dark:text-zinc-100">
       {/* Backdrop */}
@@ -401,7 +475,24 @@ export default function Portfolio() {
       <div className="fixed inset-0 -z-10 opacity-50 mix-blend-overlay" style={{ backgroundImage: "radial-gradient(1000px 500px at 20% -10%, rgba(56,189,248,0.18), transparent 60%), radial-gradient(1000px 600px at 80% 110%, rgba(99,102,241,0.18), transparent 60%)" }} />
 
       {/* Balloons */}
-      {balloonsOn && <BalloonsLayer enabled={balloonsOn} muted={muted} />}
+      {balloonsOn && <BalloonsLayer enabled={balloonsOn} muted={muted} onPop={handlePop} />}
+
+      {/* Scroll-to-top FAB */}
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            aria-label="Scroll to top"
+            className="fixed bottom-6 right-6 z-30 flex items-center justify-center w-10 h-10 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200/70 dark:border-zinc-700/80 shadow-md hover:shadow-lg transition-shadow"
+          >
+            <ArrowUp size={16} />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* Header */}
       <header className="sticky top-0 z-20 backdrop-blur bg-white/60 dark:bg-zinc-900/40 border-b border-zinc-200/60 dark:border-zinc-800/60">
@@ -409,30 +500,43 @@ export default function Portfolio() {
           <a href="#top" className="font-semibold tracking-tight text-lg">Naim Shaikhzadeh</a>
           <nav className="hidden md:flex items-center gap-6">
             {nav.map((n) => (
-              <a key={n.href} href={n.href} className="text-sm hover:opacity-90 transition-opacity">{n.label}</a>
+              <a
+                key={n.href}
+                href={n.href}
+                className={cx(
+                  "text-sm transition-all duration-150",
+                  activeSection === n.href.slice(1)
+                    ? "text-zinc-900 dark:text-white font-medium"
+                    : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200"
+                )}
+              >
+                {n.label}
+              </a>
             ))}
           </nav>
           <div className="flex items-center gap-2">
             <button
               aria-label="Toggle balloons"
               onClick={() => setBalloonsOn((v) => !v)}
-              className="rounded-full border border-zinc-300/60 dark:border-zinc-700/80 px-3 py-1 text-xs hover:bg-zinc-50 dark:hover:bg-zinc-800/60 transition-colors"
+              className={pillCls}
             >
-              {balloonsOn ? "Balloons: On" : "Balloons: Off"}
+              {balloonsOn ? `🎈 ${popCount}` : "Balloons: Off"}
             </button>
             <button
-              aria-label="Mute pops"
+              aria-label={muted ? "Unmute pops" : "Mute pops"}
               onClick={() => setMuted((m) => !m)}
-              className="rounded-full border border-zinc-300/60 dark:border-zinc-700/80 px-3 py-1 text-xs hover:bg-zinc-50 dark:hover:bg-zinc-800/60 transition-colors"
+              className={cx(pillCls, "inline-flex items-center gap-1")}
             >
-              {muted ? "Sound: Off" : "Sound: On"}
+              {muted ? <VolumeX size={13} /> : <Volume2 size={13} />}
+              <span className="hidden lg:inline">{muted ? "Muted" : "Sound"}</span>
             </button>
             <button
               aria-label="Toggle theme"
               onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
-              className="ml-1 inline-flex items-center gap-1 rounded-full border border-zinc-300/60 dark:border-zinc-700/80 px-3 py-1 text-xs hover:bg-zinc-50 dark:hover:bg-zinc-800/60 transition-colors"
+              className={cx(pillCls, "inline-flex items-center gap-1")}
             >
-              {dark ? <Sun size={14} /> : <Moon size={14} />}<span>{dark ? "Light" : "Dark"}</span>
+              {dark ? <Sun size={13} /> : <Moon size={13} />}
+              <span className="hidden lg:inline">{dark ? "Light" : "Dark"}</span>
             </button>
           </div>
         </div>
@@ -469,10 +573,10 @@ export default function Portfolio() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.5 }}
               >
-                <a href="https://github.com/NaimSS" target="_blank" className="group inline-flex items-center gap-2 rounded-full bg-black dark:bg-white text-white dark:text-black px-6 py-3 text-sm font-medium hover:scale-105 transition-transform duration-200">
+                <a href="https://github.com/NaimSS" target="_blank" rel="noopener noreferrer" className="group inline-flex items-center gap-2 rounded-full bg-black dark:bg-white text-white dark:text-black px-6 py-3 text-sm font-medium hover:scale-105 transition-transform duration-200">
                   <Github size={16} /> GitHub
                 </a>
-                <a href="https://www.linkedin.com/in/naimsantos" target="_blank" className="group inline-flex items-center gap-2 rounded-full border border-zinc-300 dark:border-zinc-700 px-6 py-3 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800/60 transition-colors duration-200">
+                <a href="https://www.linkedin.com/in/naimsantos" target="_blank" rel="noopener noreferrer" className="group inline-flex items-center gap-2 rounded-full border border-zinc-300 dark:border-zinc-700 px-6 py-3 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800/60 transition-colors duration-200">
                   <Linkedin size={16} /> LinkedIn
                 </a>
               </motion.div>
@@ -638,7 +742,7 @@ export default function Portfolio() {
                   <li>Recognized as <span className="font-medium">Global Winners</span> (Top 10).</li>
                 </ul>
                 <div className="mt-3">
-                  <a href="https://www.spaceappschallenge.org/2023/find-a-team/greetings-from-earth1/" target="_blank" className="text-sm underline opacity-80 hover:opacity-100">Project page ↗</a>
+                  <a href="https://www.spaceappschallenge.org/2023/find-a-team/greetings-from-earth1/" target="_blank" rel="noopener noreferrer" className="text-sm underline opacity-80 hover:opacity-100">Project page ↗</a>
                 </div>
               </div>
             </div>
@@ -674,15 +778,17 @@ export default function Portfolio() {
         </Section>
 
         {/* Places visited */ }
-        <CuriosityMap />
+        <Suspense fallback={<div className="h-[520px] rounded-2xl bg-zinc-100 dark:bg-zinc-900/40 animate-pulse" />}>
+          <CuriosityMap />
+        </Suspense>
 
         {/* Footer */}
         <footer className="py-12" aria-label="footer">
           <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-zinc-500 dark:text-zinc-400">
             <div>© {new Date().getFullYear()} Naim Shaikhzadeh</div>
             <div className="flex items-center gap-4">
-              <a className="inline-flex items-center gap-1 hover:opacity-90" href="https://github.com/NaimSS" target="_blank"><Github size={16} /> GitHub</a>
-              <a className="inline-flex items-center gap-1 hover:opacity-90" href="https://www.linkedin.com/in/naimsantos" target="_blank"><Linkedin size={16} /> LinkedIn</a>
+              <a className="inline-flex items-center gap-1 hover:opacity-90" href="https://github.com/NaimSS" target="_blank" rel="noopener noreferrer"><Github size={16} /> GitHub</a>
+              <a className="inline-flex items-center gap-1 hover:opacity-90" href="https://www.linkedin.com/in/naimsantos" target="_blank" rel="noopener noreferrer"><Linkedin size={16} /> LinkedIn</a>
             </div>
           </div>
         </footer>

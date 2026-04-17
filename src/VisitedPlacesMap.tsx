@@ -2,24 +2,6 @@ import { useEffect, useMemo, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Tooltip, useMap } from "react-leaflet";
 import L, { type LatLngExpression } from "leaflet";
 
-// Add custom styles for the map
-const mapStyles = `
-  .leaflet-div-icon {
-    background: transparent !important;
-    border: none !important;
-  }
-  .custom-marker-pin {
-    background: transparent !important;
-    border: none !important;
-  }
-  .leaflet-container {
-    background: #f8fafc;
-  }
-  .dark .leaflet-container {
-    background: #0f172a;
-  }
-`;
-
 // Fix default marker icons (Vite/Webpack) - create custom icon
 const createCustomIcon = (index: number) => {
   return L.divIcon({
@@ -55,6 +37,7 @@ const VISITS: Visit[] = [
   { city: "Baku",           country: "Azerbaijan",   date: "2025", lat: 40.4093,    lng: 49.8671 },
   { city: "Washington, D.C.", country: "USA",       date: "2024", lat: 38.9072,    lng: -77.0369 },
   { city: "Campinas",       country: "Brazil",       date: "2020", lat: -22.9056,   lng: -47.0608 },
+  { city: "Santiago",       country: "Chile",        date: "2026", lat: -33.4489,   lng: -70.6693 },
 ];
 
 // Fit the map to markers once they exist
@@ -114,16 +97,6 @@ export default function CuriosityMap() {
     const first = Math.min(...years);
     const last = Math.max(...years);
     return { cities, countries, first, last };
-  }, []);
-
-  // Add styles to head
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.textContent = mapStyles;
-    document.head.appendChild(style);
-    return () => {
-      document.head.removeChild(style);
-    };
   }, []);
 
   // Fallback center; bounds will override after mount

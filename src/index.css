@@ -10,3 +10,19 @@
     -moz-osx-font-smoothing: grayscale;
   }
 }
+
+/* Map marker styles */
+.leaflet-div-icon {
+  background: transparent !important;
+  border: none !important;
+}
+.custom-marker-pin {
+  background: transparent !important;
+  border: none !important;
+}
+.leaflet-container {
+  background: #f8fafc;
+}
+.dark .leaflet-container {
+  background: #0f172a;
+}
