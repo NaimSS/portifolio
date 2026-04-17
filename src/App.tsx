@@ -520,7 +520,7 @@ export default function Portfolio() {
               onClick={() => setBalloonsOn((v) => !v)}
               className={pillCls}
             >
-              {balloonsOn ? `🎈 ${popCount}` : "Balloons: Off"}
+              {balloonsOn ? `🎈 ${popCount} · turn off` : "Balloons: Off"}
             </button>
             <button
               aria-label={muted ? "Unmute pops" : "Mute pops"}
